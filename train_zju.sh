@@ -1,0 +1,1 @@
+python train.py --cfg configs/zju_mocap.yaml --subject 377

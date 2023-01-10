@@ -1,0 +1,1 @@
+python train.py --cfg configs/wild.yaml --subject jntm
