@@ -9,3 +9,7 @@ __pycache__
 __pycache__/
 video
 video/
+*.pkl
+*.so
+detectron2/demo/model_final_2d9806.pkl
+

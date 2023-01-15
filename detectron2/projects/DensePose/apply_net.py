@@ -188,9 +188,41 @@ class DumpAction(InferenceAction):
         out_dir = os.path.dirname(out_fname)
         if len(out_dir) > 0 and not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        with open(out_fname, "wb") as hFile:
-            torch.save(context["results"], hFile)
-            logger.info(f"Output saved to {out_fname}")
+        import ipdb
+        import numpy as np
+        import PIL.Image as Image
+        from tqdm import tqdm
+        data = context["results"]
+        for index in tqdm(range(len(data)), total=len(data)):
+            i = data[index]['pred_densepose'][0].labels.cpu().numpy() * 0
+            uv = data[index]['pred_densepose'][0].uv.cpu().numpy()
+            iuv = np.stack((uv[1,:,:], uv[0,:,:], i))
+            iuv = np.transpose(iuv, (1,2,0))
+            # iuv_img = Image.fromarray(np.uint8(iuv*255),"RGB")
+
+            data_id = data[index]['file_name'].split("/")[-1].split(".")[0]
+            data_path = os.path.join(out_dir, data_id)
+            if os.path.exists(data_path) is False:
+                os.makedirs(data_path)
+            # iuv_img.save(data_path+"/"+data_id+".png")
+
+            box = data[index]["pred_boxes_XYXY"][0]
+            box[2]=box[2]-box[0]
+            box[3]=box[3]-box[1]
+            x,y,w,h=[int(v) for v in box]
+            imgh, imgw = Image.open(data[index]['file_name']).size
+
+            bg=np.zeros((imgh, imgw ,3))
+            if index==1:
+                bg=bg=np.zeros((imgw, imgh, 3))
+            print(h,w, iuv.shape, bg.shape)
+            bg[y:y+h,x:x+w,:]=iuv
+            bg_img = Image.fromarray(np.uint8(bg*255),"RGB")
+            bg_img.save(data_path+"/"+data_id+"_IUV.png")
+        logger.info(f"Output saved to {out_fname}")
+        # with open(out_fname, "wb") as hFile:
+        #     torch.save(context["results"], hFile)
+        #     logger.info(f"Output saved to {out_fname}")
 
 
 @register_action
